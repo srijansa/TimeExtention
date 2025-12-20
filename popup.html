@@ -1,0 +1,35 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Time Extension</title>
+    <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+    <div class="container" role="dialog" aria-label="Time Extension popup">
+        <header class="header">
+            <h1 class="title">Time Extension</h1>
+            <button id="settingsBtn" aria-label="Open settings">⚙️</button>
+        </header>
+
+        <main>
+            <div id="timer" class="time" role="timer" aria-live="polite">00:00:00</div>
+
+            <div class="controls" role="group" aria-label="Timer controls">
+                <button id="startBtn" class="primary" aria-pressed="false">Start</button>
+                <button id="pauseBtn" aria-pressed="false">Pause</button>
+                <button id="resetBtn" aria-pressed="false">Reset</button>
+            </div>
+
+            <div id="status" class="muted" aria-live="polite">Ready</div>
+        </main>
+
+        <footer>
+            <span>v1.0</span>
+        </footer>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

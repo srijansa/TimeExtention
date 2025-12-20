@@ -1,6 +1,20 @@
 {
   "manifest_version": 3,
-  "name": "Timer Extention",
+  "name": "Timer Extension",
   "version": "1.0.0",
-  "description": "Extention for creating an online timer."
+  "description": "Extension for creating an online timer.",
+  "icons": {
+    "16": "timer_img.jpg",
+    "48": "timer_img.jpg",
+    "128": "timer_img.jpg"
+  },
+  "action": {
+    "default_icon": {
+      "16": "timer_img.jpg",
+      "24": "timer_img.jpg",
+      "32": "timer_img.jpg"
+    },
+    "default_title": "Timer Extension",
+    "default_popup": "popup.html"
+  }
 }
