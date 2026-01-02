@@ -1,16 +1,16 @@
 (() => {
     const $ = id => document.getElementById(id);
-    let startBtnb, pauseBtn, resetBtn, timerEl, statusEl, presetButtons, modeToggle, lapsList, clearLapsBtn;
+    let startBtn, pauseBtn, resetBtn, lapBtn, timerEl, statusEl, presetButtons, modeToggle, lapsList, clearLapsBtn;
 
     let intervalId = null;
     let elapsedMs = 0;
     let running = false;
     let lastStart = null;
     let laps = [];
-    let mode = 'stopwatch'; 
+    let mode = 'stopwatch';
     let durationMs = 0;
     let selectedPreset = null;
-    const STORAGE_KEYS = ['elapsedMs', 'running', 'lastStart', 'laps', 'mode', 'durationMs', 'selectPreset'];
+    const STORAGE_KEYS = ['elapsedMs', 'running', 'lastStart', 'laps', 'mode', 'durationMs', 'selectedPreset'];
 
     function formatTime(ms) {
         ms = Math.max(0, Math.floor(ms));
@@ -23,27 +23,29 @@
 
     function updateDisplay() {
         const now = Date.now();
+
         if (mode === 'stopwatch') {
             const current = elapsedMs + (running && lastStart ? now - lastStart : 0);
-            timerEl.textContent = formatTime(current);
-            statusEl.textContent = running ? 'Running (stopwatch)' : 'Paused'; 
+            if (timerEl) timerEl.textContent = formatTime(current);
+            if (statusEl) statusEl.textContent = running ? 'Running (stopwatch)' : 'Paused';
         } else {
             const passed = elapsedMs + (running && lastStart ? now - lastStart : 0);
             let remaining = Math.max(0, durationMs - passed);
-            timerEl.textContent = formatTime(remaining);
+            if (timerEl) timerEl.textContent = formatTime(remaining);
             if (remaining === 0 && running) {
                 running = false;
                 lastStart = null;
                 stopInterval();
-                statusEl.textContent = 'Finished!';
+                if (statusEl) statusEl.textContent = 'Finished!';
                 saveState();
             } else {
-                statusEl.textContent = runnning ? 'Running (countdown)' : 'Paused';
+                if (statusEl) statusEl.textContent = running ? 'Running (countdown)' : 'Paused';
             }
         }
-        startBtnb.setAttribute('aria-pressed', String(running));
-        pauseBtn.setAttribute('aria-pressed', String(!running));
-        modeToggle.setAttribute('aria-pressed', String(mode === 'countdown' ? 'true' : 'false'));
+
+        if (startBtn) startBtn.setAttribute('aria-pressed', String(running));
+        if (pauseBtn) pauseBtn.setAttribute('aria-pressed', String(!running));
+        if (modeToggle) modeToggle.setAttribute('aria-pressed', String(mode === 'countdown'));
         renderLaps();
         updatePresetActive();
     }
@@ -60,16 +62,39 @@
     }
 
     function saveState() {
+        const payload = {
+            elapsedMs, running, lastStart,
+            laps: JSON.stringify(laps),
+            mode, durationMs, selectedPreset
+        };
+
         if (window.chrome && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.set({ elapsedMs, running, lastStart });
+            chrome.storage.local.set(payload, () => {
+                if (chrome.runtime && chrome.runtime.lastError) {
+                    console.warn('chrome.storage.local.set error:', chrome.runtime.lastError.message);
+                }
+            });
         } else {
             localStorage.setItem('elapsedMs', String(elapsedMs));
             localStorage.setItem('running', String(running));
             localStorage.setItem('lastStart', lastStart ? String(lastStart) : '');
+            localStorage.setItem('laps', JSON.stringify(laps));
             localStorage.setItem('mode', mode);
             localStorage.setItem('durationMs', String(durationMs));
-            localStorage.setItem('selectedPreset', selectedPreset ? String(selectedPreset) : '');
+            localStorage.setItem('selectedPreset', String(selectedPreset || ''));
         }
+    }
+
+    function clearStoredLaps() {
+        const lapKey = 'laps';
+        if (window.chrome && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.remove(lapKey, () => {
+                if (chrome.runtime && chrome.runtime.lastError) {
+                    console.warn('chrome.storage.local.remove(laps) error:', chrome.runtime.lastError.message);
+                }
+            });
+        }
+        localStorage.removeItem(lapKey);
     }
 
     function loadState() {
@@ -83,7 +108,6 @@
                 durationMs = Number(data.durationMs || 0);
                 selectedPreset = data.selectedPreset || null;
 
-                // Normalize running for countdown: if finished, stop
                 if (mode === 'countdown' && durationMs > 0) {
                     const passed = elapsedMs + (running && lastStart ? Date.now() - lastStart : 0);
                     if (passed >= durationMs) {
@@ -117,9 +141,9 @@
 
     function start() {
         if (running) return;
-        // If countdown and no duration set, do nothing
+
         if (mode === 'countdown' && durationMs <= 0) {
-            statusEl.textContent = 'Select a preset first';
+            if (statusEl) statusEl.textContent = 'Select a preset first';
             return;
         }
         running = true;
@@ -152,7 +176,7 @@
         const now = Date.now();
         if (mode === 'stopwatch') {
             const current = elapsedMs + (running && lastStart ? now - lastStart : 0);
-            laps.unshift(current); 
+            laps.unshift(current);
         } else {
             const passed = elapsedMs + (running && lastStart ? now - lastStart : 0);
             const remaining = Math.max(0, durationMs - passed);
@@ -164,7 +188,7 @@
 
     function clearLaps() {
         laps = [];
-        saveState();
+        clearStoredLaps();
         renderLaps();
     }
 
@@ -187,6 +211,7 @@
     }
 
     function renderLaps() {
+        if (!lapsList) return;
         lapsList.innerHTML = '';
         if (!laps || laps.length === 0) {
             const li = document.createElement('li');
@@ -212,6 +237,7 @@
     }
 
     function updatePresetActive() {
+        if (!presetButtons) return;
         presetButtons.forEach(btn => {
             if (btn.id === selectedPreset) {
                 btn.classList.add('active');
@@ -224,23 +250,25 @@
     }
 
     function wireEvents() {
-        startBtn.addEventListener('click', start);
-        pauseBtn.addEventListener('click', pause);
-        resetBtn.addEventListener('click', reset);
-        lapBtn.addEventListener('click', () => {
+        if (startBtn) startBtn.addEventListener('click', start);
+        if (pauseBtn) pauseBtn.addEventListener('click', pause);
+        if (resetBtn) resetBtn.addEventListener('click', reset);
+        if (lapBtn) lapBtn.addEventListener('click', () => {
             if (!running) return;
             recordLap();
         });
 
-        presetButtons.forEach(btn => {
-            btn.addEventListener('click', () => applyPreset(btn));
-        });
+        if (presetButtons && presetButtons.length) {
+            presetButtons.forEach(btn => {
+                btn.addEventListener('click', () => applyPreset(btn));
+            });
+        }
 
-        modeToggle.addEventListener('click', () => {
+        if (modeToggle) modeToggle.addEventListener('click', () => {
             toggleMode();
         });
 
-        clearLapsBtn.addEventListener('click', clearLaps);
+        if (clearLapsBtn) clearLapsBtn.addEventListener('click', clearLaps);
     }
 
     function initElements() {
