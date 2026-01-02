@@ -14,15 +14,28 @@
         </header>
 
         <main>
+            <nav class="presets" role="tablist" aria-label="Presets">
+                <button class="preset-btn" data-duration="60000" id="preset1">1m</button>
+                <button class="preset-btn" data-duration="300000" id="preset2">5m</button>
+                <button class="preset-btn" data-duration="1500000" id="preset3">25m</button>
+            </nav>
             <div id="timer" class="time" role="timer" aria-live="polite">00:00:00</div>
 
             <div class="controls" role="group" aria-label="Timer controls">
                 <button id="startBtn" class="primary" aria-pressed="false">Start</button>
                 <button id="pauseBtn" aria-pressed="false">Pause</button>
+                <button id="lapBtn" aria-pressed="false">Lap</button>
                 <button id="resetBtn" aria-pressed="false">Reset</button>
             </div>
 
             <div id="status" class="muted" aria-live="polite">Ready</div>
+            <section class="laps" aria-label="Laps">
+                <div class="laps-header">
+                    <h2 class="muted">Laps</h2>
+                    <button id="clearLapsBtn" aria-label="Clear laps">🗑️</button>
+                </div>
+                <ul id="lapsList" class="laps-list" aria-live="polite"></ul>
+            </section>
         </main>
 
         <footer>
