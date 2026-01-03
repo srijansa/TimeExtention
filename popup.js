@@ -199,6 +199,7 @@
         elapsedMs = 0;
         lastStart = null;
         running = false;
+        mode = 'countdown';
         stopInterval();
         saveState();
         updateDisplay();
